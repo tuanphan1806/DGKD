@@ -16,106 +16,109 @@ use Dompdf\Dompdf;
 
 class OrderController extends Controller
 {
-    public function orders(){
-        Session::put('page','orders');
-        $adminType =Auth::guard('admin')->user()->type;
-        $vendor_id =Auth::guard('admin')->user()->vendor_id;
-        if($adminType=="vendor"){
+    public function orders()
+    {
+        Session::put('page', 'orders');
+        $adminType = Auth::guard('admin')->user()->type;
+        $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        if ($adminType == "vendor") {
             $vendorStatus = Auth::guard('admin')->user()->status;
-            if($vendorStatus==0){
-                return redirect("admin/update-vendor-details/personal")->with('error_message','Tài khoản của bạn chưa được cấp phép, vui lòng liên hệ quản trị viên');
+            if ($vendorStatus == 0) {
+                return redirect("admin/update-vendor-details/personal")->with('error_message', 'Tài khoản của bạn chưa được cấp phép, vui lòng liên hệ quản trị viên');
             }
         }
-        if($adminType=="vendor"){
-            $orders =Order::with(['orders_products'=>function($query)use($vendor_id){
-                $query->where('vendor_id',$vendor_id);
-            }])->orderBy('id','Desc')->get()->toArray();
-        }else{
-            $orders =Order::with('orders_products')->orderBy('id','Desc')->get()->toArray();
+        if ($adminType == "vendor") {
+            $orders = Order::with(['orders_products' => function ($query) use ($vendor_id) {
+                $query->where('vendor_id', $vendor_id);
+            }])->orderBy('id', 'Desc')->get()->toArray();
+        } else {
+            $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray();
         }
-        
+
         // dd($orders);
         return view('admin.orders.orders')->with(compact('orders'));
     }
 
-    public function orderDetails($id){
-        Session::put('page','orders');
-        $adminType =Auth::guard('admin')->user()->type;
-        $vendor_id =Auth::guard('admin')->user()->vendor_id;
-        if($adminType=="vendor"){
+    public function orderDetails($id)
+    {
+        Session::put('page', 'orders');
+        $adminType = Auth::guard('admin')->user()->type;
+        $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        if ($adminType == "vendor") {
             $vendorStatus = Auth::guard('admin')->user()->status;
-            if($vendorStatus==0){
-                return redirect("admin/update-vendor-details/personal")->with('error_message','Tài khoản của bạn chưa được cấp phép, vui lòng liên hệ quản trị viên');
+            if ($vendorStatus == 0) {
+                return redirect("admin/update-vendor-details/personal")->with('error_message', 'Tài khoản của bạn chưa được cấp phép, vui lòng liên hệ quản trị viên');
             }
         }
 
-        if($adminType=="vendor"){
-            $orderDetails = Order::with(['orders_products'=>function($query)use($vendor_id){
-                $query->where('vendor_id',$vendor_id);
-            }])->where('id',$id)->first()->toArray();
-
-        }else{
-            $orderDetails = Order::with('orders_products')->where('id',$id)->first()->toArray();
-
+        if ($adminType == "vendor") {
+            $orderDetails = Order::with(['orders_products' => function ($query) use ($vendor_id) {
+                $query->where('vendor_id', $vendor_id);
+            }])->where('id', $id)->first()->toArray();
+        } else {
+            $orderDetails = Order::with('orders_products')->where('id', $id)->first()->toArray();
         }
 
-        $userDetails = User::where('id',$orderDetails['user_id'])->first()->toArray();
-        $orderStatuses = OrderStatus::where('status',1)->get()->toArray();
-        $orderItemStatuses = OrderItemStatus::where('status',1)->get()->toArray();
-        $orderLog = OrdersLog::with('orders_products')->where('order_id',$id)->orderBy('id','Desc')->get()->toArray();
-        return view('admin.orders.order_details')->with(compact('orderDetails','userDetails','orderStatuses','orderItemStatuses','orderLog'));
-
+        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray();
+        $orderStatuses = OrderStatus::where('status', 1)->get()->toArray();
+        $orderItemStatuses = OrderItemStatus::where('status', 1)->get()->toArray();
+        $orderLog = OrdersLog::with('orders_products')->where('order_id', $id)->orderBy('id', 'Desc')->get()->toArray();
+        return view('admin.orders.order_details')->with(compact('orderDetails', 'userDetails', 'orderStatuses', 'orderItemStatuses', 'orderLog'));
     }
-    public function updateOrderStatus(Request $request){
-        if($request->isMethod('post')){
-            $data =$request->all();
+    public function updateOrderStatus(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $data = $request->all();
             //update status
-            Order::where('id',$data['order_id'])->update(['order_status'=>$data['order_status']]);
+            Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
             //update dvvc 
-            if(!empty($data['courier_name'])&&!empty($data['tracking_number'])){
-                Order::where('id',$data['order_id'])->update(['courier_name'=>$data['courier_name'],'tracking_number'=>$data['tracking_number']]);
+            if (!empty($data['courier_name']) && !empty($data['tracking_number'])) {
+                Order::where('id', $data['order_id'])->update(['courier_name' => $data['courier_name'], 'tracking_number' => $data['tracking_number']]);
             }
             //update log
             $log = new OrdersLog();
-            $log->order_id =$data['order_id'];
-            $log->order_status =$data['order_status'];
+            $log->order_id = $data['order_id'];
+            $log->order_status = $data['order_status'];
             $log->save();
 
-            $message ="Cập nhật trạng thái đơn hàng thành công !";
-            return redirect()->back()->with('success_message',$message);
+            $message = "Cập nhật trạng thái đơn hàng thành công !";
+            return redirect()->back()->with('success_message', $message);
         }
     }
 
-    public function updateOrderItemStatus(Request $request){
-        if($request->isMethod('post')){
-            $data =$request->all();
+    public function updateOrderItemStatus(Request $request)
+    {
+        if ($request->isMethod('post')) {
+            $data = $request->all();
             //update status
-            OrdersProduct::where('id',$data['order_item_id'])->update(['item_status'=>$data['item_status']]);
+            OrdersProduct::where('id', $data['order_item_id'])->update(['item_status' => $data['item_status']]);
             //update dvvc 
-            if(!empty($data['item_courier_name'])&&!empty($data['item_tracking_number'])){
-                OrdersProduct::where('id',$data['order_item_id'])->update(['courier_name'=>$data['item_courier_name'],'tracking_number'=>$data['item_tracking_number']]);
+            if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) {
+                OrdersProduct::where('id', $data['order_item_id'])->update(['courier_name' => $data['item_courier_name'], 'tracking_number' => $data['item_tracking_number']]);
             }
-            $getOrderId = OrdersProduct::select('order_id')->where('id',$data['order_item_id'])->first()->toArray();
+            $getOrderId = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first()->toArray();
             //update log
             $log = new OrdersLog();
-            $log->order_id =$getOrderId['order_id'];
-            $log->order_item_id =$data['order_item_id'];
-            $log->order_status =$data['item_status'];
+            $log->order_id = $getOrderId['order_id'];
+            $log->order_item_id = $data['order_item_id'];
+            $log->order_status = $data['item_status'];
             $log->save();
 
-            $message ="Cập nhật trạng thái sản phẩm thành công !";
-            return redirect()->back()->with('success_message',$message);
+            $message = "Cập nhật trạng thái sản phẩm thành công !";
+            return redirect()->back()->with('success_message', $message);
         }
     }
-    public function viewOrderInvoice($order_id){
-        $orderDetails= Order::with('orders_products')->where('id',$order_id)->first()->toArray();
-        $userDetails = User::where('id',$orderDetails['user_id'])->first()->toArray();
-        return view('admin.orders.order_invoice')->with(compact('orderDetails','userDetails'));
+    public function viewOrderInvoice($order_id)
+    {
+        $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray();
+        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray();
+        return view('admin.orders.order_invoice')->with(compact('orderDetails', 'userDetails'));
     }
-    public function printPDFInvoice($order_id){
-        $orderDetails= Order::with('orders_products')->where('id',$order_id)->first()->toArray();
-        $userDetails = User::where('id',$orderDetails['user_id'])->first()->toArray();
-        $invoiceHTML='<!DOCTYPE html>
+    public function printPDFInvoice($order_id)
+    {
+        $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray();
+        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray();
+        $invoiceHTML = '<!DOCTYPE html>
         <html>
         <head>
             <title>Hóa đơn thanh toán</title>
@@ -424,17 +427,17 @@ class OrderController extends Controller
                     <div class="details clearfix">
                         <div class="client left">
                             <p>INVOICE TO:</p>
-                            <p class="name">'.$orderDetails['name'].'</p>
-                            <p>'.$orderDetails['address'].','.$orderDetails['state'].','.$orderDetails['city'].','.$orderDetails['country'].'</p>
-                            <a href="mailto:'.$orderDetails['email'].'">'.$orderDetails['email'].'</a>
+                            <p class="name">' . $orderDetails['name'] . '</p>
+                            <p>' . $orderDetails['address'] . ',' . $orderDetails['state'] . ',' . $orderDetails['city'] . ',' . $orderDetails['country'] . '</p>
+                            <a href="mailto:' . $orderDetails['email'] . '">' . $orderDetails['email'] . '</a>
                         </div>
                         <div class="data right">
-                            <div class="title">ID: '.$orderDetails['id'].'</div>
+                            <div class="title">ID: ' . $orderDetails['id'] . '</div>
                             <div class="date">
-                                Order Date: '.\Carbon\Carbon::parse($orderDetails['created_at'])->format('d/m/Y H:i:s').'<br>
-                                Order Amount: '.number_format($orderDetails['grand_total'], 0, ',', '.').' VND<br>
-                                Order Status: '.$orderDetails['order_status'].'<br>
-                                Payment Method: '.$orderDetails['payment_method'].'<br>
+                                Order Date: ' . \Carbon\Carbon::parse($orderDetails['created_at'])->format('d/m/Y H:i:s') . '<br>
+                                Order Amount: ' . number_format($orderDetails['grand_total'], 0, ',', '.') . ' VND<br>
+                                Order Status: ' . $orderDetails['order_status'] . '<br>
+                                Payment Method: ' . $orderDetails['payment_method'] . '<br>
                             </div>
                         </div>
                     </div>
@@ -451,19 +454,19 @@ class OrderController extends Controller
                             </tr>
                         </thead>
                         <tbody>';
-                        $subTotal =0;
-                        foreach($orderDetails['orders_products'] as $product){
-                            $invoiceHTML.='<tr>
-                                <td class="desc">'.$product['product_code'].'</td>
-                                <td class="qty">'.$product['product_size'].'</td>
-                                <td class="qty">'.$product['product_color'].'</td>
-                                <td class="qty">'.$product['product_qty'].'</td>
-                                <td class="unit">'.number_format($product['product_price'] , 0, ',', '.').' VND</td>
-                                <td class="total">'.number_format($product['product_price']*$product['product_qty'] , 0, ',', '.').'VND</td>
+        $subTotal = 0;
+        foreach ($orderDetails['orders_products'] as $product) {
+            $invoiceHTML .= '<tr>
+                                <td class="desc">' . $product['product_code'] . '</td>
+                                <td class="qty">' . $product['product_size'] . '</td>
+                                <td class="qty">' . $product['product_color'] . '</td>
+                                <td class="qty">' . $product['product_qty'] . '</td>
+                                <td class="unit">' . number_format($product['product_price'], 0, ',', '.') . ' VND</td>
+                                <td class="total">' . number_format($product['product_price'] * $product['product_qty'], 0, ',', '.') . 'VND</td>
                             </tr>';
-                            $subTotal = $subTotal + ($product['product_price']*$product['product_qty']);
-                        }
-                        $invoiceHTML.='</tbody>
+            $subTotal = $subTotal + ($product['product_price'] * $product['product_qty']);
+        }
+        $invoiceHTML .= '</tbody>
                     </table>
                     <div class="no-break">
                         <table class="grand-total">
@@ -473,7 +476,7 @@ class OrderController extends Controller
                                     <td class="desc"></td>
                                     <td class="desc"></td>
                                     <td class="total" colspan=2>SUBTOTAL</td>
-                                    <td class="total">'.number_format($subTotal, 0, ',', '.').' VND</td>
+                                    <td class="total">' . number_format($subTotal, 0, ',', '.') . ' VND</td>
                                 </tr>
                                 <tr>
                                     <td class="desc"></td>
@@ -489,18 +492,18 @@ class OrderController extends Controller
                                     <td class="desc"></td>
                                    
                                     <td class="total" colspan=2>Discount</td>';
-                                    if($orderDetails['coupon_amount']>0){
-                                        $invoiceHTML.='<td class="total">'.number_format($orderDetails['coupon_amount'], 0, ',', '.').'VND</td>';
-                                    }else{
-                                        $invoiceHTML.='<td class="total">0 VND</td>';
-                                    }
-                                    $invoiceHTML.='</tr>
+        if ($orderDetails['coupon_amount'] > 0) {
+            $invoiceHTML .= '<td class="total">' . number_format($orderDetails['coupon_amount'], 0, ',', '.') . 'VND</td>';
+        } else {
+            $invoiceHTML .= '<td class="total">0 VND</td>';
+        }
+        $invoiceHTML .= '</tr>
                                 <tr>
                                     <td class="desc"></td>
                                     <td class="desc"></td>
                                     <td class="desc"></td>
                                     <td class="total" colspan="2">TOTAL</td>
-                                    <td class="total">'.number_format($orderDetails['grand_total'], 0, ',', '.').'VND</td>
+                                    <td class="total">' . number_format($orderDetails['grand_total'], 0, ',', '.') . 'VND</td>
                                 </tr>
                             </tbody>
                         </table>

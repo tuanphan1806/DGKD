@@ -36,12 +36,12 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
 
             // validate thêm các trường mới
-            'address' => ['required', 'string', 'max:255'],
-            'city' => ['required', 'string', 'max:255'],
-            'state' => ['required', 'string', 'max:255'],
-            'country' => ['required', 'string', 'max:255'],
-            'zipcode' => ['required', 'string', 'max:20'],
-            'mobile' => ['required', 'string', 'max:20'],
+            'address' => ['string', 'max:255'],
+            'city' => ['string', 'max:255'],
+            'state' => ['string', 'max:255'],
+            'country' => ['string', 'max:255'],
+            'zipcode' => ['string', 'max:20'],
+            'mobile' => ['string', 'max:20'],
             'status' => ['nullable', 'integer'],
         ]);
 
@@ -51,12 +51,12 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
 
             // các field bổ sung
-            'address' => $request->address,
-            'city' => $request->city,
-            'state' => $request->state,
-            'country' => $request->country,
-            'zipcode' => $request->zipcode,
-            'mobile' => $request->mobile,
+            'address' => $request->address ?? null,
+            'city' => $request->city ?? null,
+            'state' => $request->state  ?? null,
+            'country' => $request->country ?? null,
+            'zipcode' => $request->zipcode ?? null,
+            'mobile' => $request->mobile ?? null,
             'status' => $request->status ?? 1, // nếu không có thì mặc định là 1
         ]);
 
