@@ -61,7 +61,7 @@ class ProductsControllerTest extends TestCase
         $response = $this->post('/admin/add-edit-product', [
             'category_id' => $category->id,
             'brand_id' => $brand->id,
-            'group_code' => 'group01',
+            // 'group_code' => 'group01',
             'product_name' => 'Sản phẩm test',
             'product_code' => 'SP01',
             'product_color' => 'Đỏ',
@@ -107,9 +107,11 @@ class ProductsControllerTest extends TestCase
         $response = $this->postJson('/admin/update-product-status', [
             'product_id' => $product->id,
             'status' => 'Active',
-        ]);
+        ], ['X-Requested-With' => 'XMLHttpRequest']);
 
+        $response->assertStatus(200);
         $response->assertJson(['status' => 0]);
+
         $this->assertDatabaseHas('products', [
             'id' => $product->id,
             'status' => 0,

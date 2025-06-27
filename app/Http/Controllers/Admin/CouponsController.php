@@ -8,8 +8,8 @@ use App\Models\User;
 use App\Models\Brand;
 use App\Models\Section;
 use Illuminate\Http\Request;
-use Session;
-use Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 
 class CouponsController extends Controller
 {

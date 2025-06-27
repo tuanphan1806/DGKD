@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Cart;
 use Illuminate\Http\Request;
-use Auth;
-use Validator;
-use Session;
-use Hash;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Hash;
 
 use function PHPSTORM_META\type;
 

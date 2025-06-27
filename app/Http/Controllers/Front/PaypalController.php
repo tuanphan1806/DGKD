@@ -5,56 +5,60 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Payment;
 use Illuminate\Http\Request;
-use Session;
+use Illuminate\Support\Facades\Session;
 use Omnipay\Omnipay;
-use Auth;
+use Illuminate\Support\Facades\Auth;
 
 
 class PaypalController extends Controller
 {
     private $gateway;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->gateway = Omnipay::create('PayPal_Rest');
         $this->gateway->setClientId(env('PAYPAL_CLIENT_ID'));
         $this->gateway->setSecret(env('PAYPAL_CLIENT_SECRET'));
         $this->gateway->setTestMode(true);
     }
-    public function paypal(){
-        if(Session::has('order_id')){
+    public function paypal()
+    {
+        if (Session::has('order_id')) {
             return view('front.paypal.paypal');
-        }else{
+        } else {
             return redirect('cart');
         }
     }
-    public function pay(Request $request){
-        try{
-            $paypal_amount = round(Session::get('grand_total')/24000,2);
-            $response =$this->gateway->purchase(array(
-                'amount'=> $paypal_amount,
-                'currency'=>env('PAYPAL_CURRENCY'),
-                'returnUrl'=>url('success'),
-                'cancelUrl'=>url('error')
+    public function pay(Request $request)
+    {
+        try {
+            $paypal_amount = round(Session::get('grand_total') / 24000, 2);
+            $response = $this->gateway->purchase(array(
+                'amount' => $paypal_amount,
+                'currency' => env('PAYPAL_CURRENCY'),
+                'returnUrl' => url('success'),
+                'cancelUrl' => url('error')
             ))->send();
-            if($response->isRedirect()){
+            if ($response->isRedirect()) {
                 $response->redirect();
-            }else{
+            } else {
                 return $response->getMessage();
             }
-        }catch (\Throwable $th){
+        } catch (\Throwable $th) {
             return $th->getMessage();
         }
     }
 
-    public function success(Request $request){
-        if($request->input('paymentId') && $request->input('PayerId')){
+    public function success(Request $request)
+    {
+        if ($request->input('paymentId') && $request->input('PayerId')) {
             $transaction = $this->gateway->completePurchase(array(
-                'payer_id'=>$request->input('PayerId'),
-                'transactionReference' =>$request->input('paymentId')
+                'payer_id' => $request->input('PayerId'),
+                'transactionReference' => $request->input('paymentId')
             ));
             $response = $transaction->send();
-            if($response->isSuccessful()){
-                $arr =$response->getData();
+            if ($response->isSuccessful()) {
+                $arr = $response->getData();
                 $payment = new Payment;
                 $payment->order_id = Session::get('order_id');
                 $payment->user_id = Auth::user()->id;
@@ -65,16 +69,16 @@ class PaypalController extends Controller
                 $payment->currency = env('PAYPAL_CURRENCY');
                 $payment->payment_status = $arr['state'];
                 $payment->save();
-                return "Thanh toán thành công. Mã giao dịch của bạn là". $arr['id'];
-
-            }else{
+                return "Thanh toán thành công. Mã giao dịch của bạn là" . $arr['id'];
+            } else {
                 return $response->getMessage();
             }
-        }else{
+        } else {
             return "Thanh toán bị từ chối!";
         }
     }
-    public function error(){
+    public function error()
+    {
         return "Khách hàng từ chối thanh toán!";
     }
 }

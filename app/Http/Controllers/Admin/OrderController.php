@@ -10,8 +10,8 @@ use App\Models\OrderItemStatus;
 use App\Models\OrdersLog;
 use App\Models\OrdersProduct;
 use Illuminate\Http\Request;
-use Session;
-use Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Auth;
 use Dompdf\Dompdf;
 
 class OrderController extends Controller
